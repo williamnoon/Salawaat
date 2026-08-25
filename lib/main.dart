@@ -1,28 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const SalawaatApp());
-}
+void main() => runApp(const SalawaatApp());
 
 class SalawaatApp extends StatelessWidget {
   const SalawaatApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFF0B0E0F);
-    const panel = Color(0xFF1A1F20);
-    const accent = Color(0xFFEFE2C3);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Salawaat',
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: background,
+        scaffoldBackgroundColor: const Color(0xFF0B0E0F),
         colorScheme: const ColorScheme.dark(
-          primary: accent,
-          surface: panel,
+          primary: Color(0xFFEFE2C3),
+          surface: Color(0xFF1A1F20),
         ),
         useMaterial3: true,
       ),
@@ -39,36 +33,33 @@ class SalawaatShell extends StatefulWidget {
 }
 
 class _SalawaatShellState extends State<SalawaatShell> {
-  bool _onboarded = false;
-  int _tab = 0;
-  int _count = 27;
-  int _minutes = 10;
-  String _platform = 'iOS';
-  String _strength = 'gentle';
-  bool _recovery = true;
-
   static const accent = Color(0xFFEFE2C3);
   static const panel = Color(0xFF1A1F20);
   static const muted = Color(0xFFA9B0AE);
 
-  void _recordSalawat() {
-    setState(() => _count += 1);
+  bool onboarded = false;
+  int tab = 0;
+  int count = 27;
+  int minutes = 10;
+  String platform = 'iOS';
+  String strength = 'gentle';
+  bool recovery = true;
+
+  void record() {
+    setState(() => count++);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recorded'),
-        duration: Duration(milliseconds: 800),
-      ),
+      const SnackBar(content: Text('Recorded'), duration: Duration(milliseconds: 700)),
     );
   }
 
-  void _showReminder() {
+  void showReminder() {
     showCupertinoModalPopup<void>(
       context: context,
-      builder: (context) => CupertinoActionSheet(
+      builder: (sheetContext) => CupertinoActionSheet(
         title: const Text('Salawāt'),
         message: const Column(
           children: [
-            SizedBox(height: 6),
+            SizedBox(height: 8),
             Text('Send ṣalāh upon the Prophet ﷺ'),
             SizedBox(height: 12),
             Text(
@@ -81,33 +72,30 @@ class _SalawaatShellState extends State<SalawaatShell> {
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.pop(context);
-              _recordSalawat();
+              Navigator.pop(sheetContext);
+              record();
             },
             child: const Text('Done'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(this.context).showSnackBar(
-                const SnackBar(
-                  content: Text('Snoozed for 5 minutes'),
-                  duration: Duration(milliseconds: 900),
-                ),
+              Navigator.pop(sheetContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Snoozed for 5 minutes')),
               );
             },
             child: const Text('Snooze 5 minutes'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.pop(context);
-              setState(() => _tab = 0);
+              Navigator.pop(sheetContext);
+              setState(() => tab = 0);
             },
             child: const Text('Open app'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(sheetContext),
           child: const Text('Dismiss'),
         ),
       ),
@@ -116,41 +104,41 @@ class _SalawaatShellState extends State<SalawaatShell> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_onboarded) {
+    if (!onboarded) {
       return _Onboarding(
-        onBegin: () => setState(() => _onboarded = true),
+        onBegin: () => setState(() => onboarded = true),
         onSchedule: () => setState(() {
-          _onboarded = true;
-          _tab = 1;
+          onboarded = true;
+          tab = 1;
         }),
       );
     }
 
-    final pages = <Widget>[
-      _TodayPage(
-        count: _count,
-        minutes: _minutes,
-        onRecord: _recordSalawat,
-        onSimulate: _showReminder,
+    final pages = [
+      _Today(
+        count: count,
+        minutes: minutes,
+        onRecord: record,
+        onSimulate: showReminder,
       ),
-      _RhythmPage(
-        minutes: _minutes,
-        platform: _platform,
-        strength: _strength,
-        recovery: _recovery,
-        onMinutesChanged: (value) => setState(() => _minutes = value),
-        onPlatformChanged: (value) => setState(() => _platform = value),
-        onStrengthChanged: (value) => setState(() => _strength = value),
-        onRecoveryChanged: (value) => setState(() => _recovery = value),
+      _Rhythm(
+        minutes: minutes,
+        platform: platform,
+        strength: strength,
+        recovery: recovery,
+        onMinutes: (value) => setState(() => minutes = value),
+        onPlatform: (value) => setState(() => platform = value),
+        onStrength: (value) => setState(() => strength = value),
+        onRecovery: (value) => setState(() => recovery = value),
       ),
-      const _WhyPage(),
+      const _Why(),
     ];
 
     return Scaffold(
-      body: SafeArea(child: pages[_tab]),
+      body: SafeArea(child: pages[tab]),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (value) => setState(() => _tab = value),
+        selectedIndex: tab,
+        onDestinationSelected: (value) => setState(() => tab = value),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.circle), label: 'Today'),
           NavigationDestination(icon: Icon(Icons.schedule), label: 'Rhythm'),
@@ -185,26 +173,15 @@ class _Onboarding extends StatelessWidget {
                 style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'فَإِنْ زِدْتَ فَهُوَ خَيْرٌ لَكَ',
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, color: _SalawaatShellState.accent),
-              ),
-              const SizedBox(height: 24),
+              const _Arabic('فَإِنْ زِدْتَ فَهُوَ خَيْرٌ لَكَ'),
+              const SizedBox(height: 20),
               const _Card(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '“If you increase it, that is better for you.”',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
+                    Text('“If you increase it, that is better for you.”', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                     SizedBox(height: 8),
-                    Text(
-                      'From the narration of Ubayy ibn Kaʿb رضي الله عنه.',
-                      style: TextStyle(color: _SalawaatShellState.muted),
-                    ),
+                    Text('From the narration of Ubayy ibn Kaʿb رضي الله عنه.', style: TextStyle(color: _SalawaatShellState.muted)),
                     SizedBox(height: 10),
                     _Pill('Jāmiʿ al-Tirmidhī 2457'),
                   ],
@@ -213,10 +190,7 @@ class _Onboarding extends StatelessWidget {
               const Spacer(),
               FilledButton(onPressed: onBegin, child: const Text('Begin')),
               const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: onSchedule,
-                child: const Text('Set reminder first'),
-              ),
+              OutlinedButton(onPressed: onSchedule, child: const Text('Set reminder first')),
             ],
           ),
         ),
@@ -225,13 +199,8 @@ class _Onboarding extends StatelessWidget {
   }
 }
 
-class _TodayPage extends StatelessWidget {
-  const _TodayPage({
-    required this.count,
-    required this.minutes,
-    required this.onRecord,
-    required this.onSimulate,
-  });
+class _Today extends StatelessWidget {
+  const _Today({required this.count, required this.minutes, required this.onRecord, required this.onSimulate});
 
   final int count;
   final int minutes;
@@ -242,163 +211,101 @@ class _TodayPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cadence = minutes == 60 ? 'Every hour' : 'Every $minutes min';
     final next = minutes == 60 ? 'in 1 hour' : 'in $minutes minutes';
-
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         const Text('TODAY', style: _Styles.eyebrow),
-        const SizedBox(height: 5),
         const Text('Salawāt', style: _Styles.title),
-        const Text(
-          'Return to the remembrance throughout your day.',
-          style: TextStyle(color: _SalawaatShellState.muted, height: 1.45),
-        ),
+        const Text('Return to the remembrance throughout your day.', style: TextStyle(color: _SalawaatShellState.muted, height: 1.45)),
         const SizedBox(height: 26),
         Center(
           child: Container(
             width: 180,
             height: 180,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF2A3031), width: 10),
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF2A3031), width: 10)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  '$count',
-                  style: const TextStyle(fontSize: 54, fontWeight: FontWeight.w800),
-                ),
-                const Text(
-                  'completed today',
-                  style: TextStyle(color: _SalawaatShellState.muted),
-                ),
+                Text('$count', style: const TextStyle(fontSize: 54, fontWeight: FontWeight.w800)),
+                const Text('completed today', style: TextStyle(color: _SalawaatShellState.muted)),
               ],
             ),
           ),
         ),
         const SizedBox(height: 18),
-        const Text(
-          'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ',
-          textDirection: TextDirection.rtl,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 26, height: 1.7, color: _SalawaatShellState.accent),
-        ),
+        const _Arabic('اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ'),
         const SizedBox(height: 18),
         FilledButton(onPressed: onRecord, child: const Text('I said it')),
         const SizedBox(height: 12),
         _Card(
           child: Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Next reminder', style: TextStyle(fontWeight: FontWeight.w700)),
-                    Text(next, style: const TextStyle(color: _SalawaatShellState.muted)),
-                  ],
-                ),
-              ),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Next reminder', style: TextStyle(fontWeight: FontWeight.w700)), Text(next, style: const TextStyle(color: _SalawaatShellState.muted))])),
               _Pill(cadence),
             ],
           ),
         ),
-        OutlinedButton(
-          onPressed: onSimulate,
-          child: const Text('Simulate reminder'),
-        ),
+        OutlinedButton(onPressed: onSimulate, child: const Text('Simulate reminder')),
       ],
     );
   }
 }
 
-class _RhythmPage extends StatelessWidget {
-  const _RhythmPage({
-    required this.minutes,
-    required this.platform,
-    required this.strength,
-    required this.recovery,
-    required this.onMinutesChanged,
-    required this.onPlatformChanged,
-    required this.onStrengthChanged,
-    required this.onRecoveryChanged,
-  });
+class _Rhythm extends StatelessWidget {
+  const _Rhythm({required this.minutes, required this.platform, required this.strength, required this.recovery, required this.onMinutes, required this.onPlatform, required this.onStrength, required this.onRecovery});
 
   final int minutes;
   final String platform;
   final String strength;
   final bool recovery;
-  final ValueChanged<int> onMinutesChanged;
-  final ValueChanged<String> onPlatformChanged;
-  final ValueChanged<String> onStrengthChanged;
-  final ValueChanged<bool> onRecoveryChanged;
+  final ValueChanged<int> onMinutes;
+  final ValueChanged<String> onPlatform;
+  final ValueChanged<String> onStrength;
+  final ValueChanged<bool> onRecovery;
 
   @override
   Widget build(BuildContext context) {
-    const choices = [10, 15, 30, 60];
-
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         const Text('SCHEDULE', style: _Styles.eyebrow),
         const Text('Your rhythm', style: _Styles.title),
-        const Text(
-          'Choose the cadence. The app handles iOS and Android scheduling differences underneath.',
-          style: TextStyle(color: _SalawaatShellState.muted, height: 1.45),
-        ),
+        const Text('Choose the cadence. The app handles iOS and Android scheduling differences underneath.', style: TextStyle(color: _SalawaatShellState.muted, height: 1.45)),
         const SizedBox(height: 16),
         SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'iOS', label: Text('iPhone')),
-            ButtonSegment(value: 'Android', label: Text('Android')),
-          ],
+          segments: const [ButtonSegment(value: 'iOS', label: Text('iPhone')), ButtonSegment(value: 'Android', label: Text('Android'))],
           selected: {platform},
-          onSelectionChanged: (value) => onPlatformChanged(value.first),
+          onSelectionChanged: (value) => onPlatform(value.first),
         ),
         const SizedBox(height: 14),
         _Card(
           child: Column(
-            children: choices.map((value) {
-              final title = value == 60 ? 'Every hour' : 'Every $value minutes';
-              return RadioListTile<int>(
-                contentPadding: EdgeInsets.zero,
-                value: value,
-                groupValue: minutes,
-                onChanged: (next) {
-                  if (next != null) onMinutesChanged(next);
-                },
-                title: Text(title),
-                subtitle: value == 10 ? const Text("Habib's rhythm") : null,
+            children: [10, 15, 30, 60].map((value) {
+              final label = value == 60 ? 'Every hour' : 'Every $value minutes';
+              return InkWell(
+                onTap: () => onMinutes(value),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontWeight: FontWeight.w600)), if (value == 10) const Text("Habib's rhythm", style: TextStyle(color: _SalawaatShellState.muted, fontSize: 12))])),
+                      Icon(minutes == value ? Icons.radio_button_checked : Icons.radio_button_off, color: minutes == value ? _SalawaatShellState.accent : _SalawaatShellState.muted),
+                    ],
+                  ),
+                ),
               );
             }).toList(),
           ),
         ),
-        const SizedBox(height: 8),
         const Text('Alert strength', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         _Card(
           child: Column(
             children: [
-              _StrengthTile(
-                title: 'Gentle',
-                subtitle: 'Normal notification',
-                selected: strength == 'gentle',
-                onTap: () => onStrengthChanged('gentle'),
-              ),
-              _StrengthTile(
-                title: 'On time',
-                subtitle: 'Exact timing when the platform permits',
-                selected: strength == 'ontime',
-                onTap: () => onStrengthChanged('ontime'),
-              ),
-              _StrengthTile(
-                title: 'Hard to miss',
-                subtitle: platform == 'iOS'
-                    ? 'AlarmKit for selected reminders'
-                    : 'Alarm-style Android alert',
-                selected: strength == 'strong',
-                onTap: () => onStrengthChanged('strong'),
-              ),
+              _Strength('Gentle', 'Normal notification', strength == 'gentle', () => onStrength('gentle')),
+              _Strength('On time', 'Exact timing when the platform permits', strength == 'ontime', () => onStrength('ontime')),
+              _Strength('Hard to miss', platform == 'iOS' ? 'AlarmKit for selected reminders' : 'Alarm-style Android alert', strength == 'strong', () => onStrength('strong')),
             ],
           ),
         ),
@@ -406,13 +313,9 @@ class _RhythmPage extends StatelessWidget {
           child: SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: recovery,
-            onChanged: onRecoveryChanged,
+            onChanged: onRecovery,
             title: const Text('Keep reminders going'),
-            subtitle: Text(
-              platform == 'iOS'
-                  ? 'Use a recovery reminder before the local queue runs low.'
-                  : 'Restore schedules after reboot or permission changes.',
-            ),
+            subtitle: Text(platform == 'iOS' ? 'Use a recovery reminder before the local queue runs low.' : 'Restore schedules after reboot or permission changes.'),
           ),
         ),
       ],
@@ -420,14 +323,8 @@ class _RhythmPage extends StatelessWidget {
   }
 }
 
-class _StrengthTile extends StatelessWidget {
-  const _StrengthTile({
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
-
+class _Strength extends StatelessWidget {
+  const _Strength(this.title, this.subtitle, this.selected, this.onTap);
   final String title;
   final String subtitle;
   final bool selected;
@@ -440,16 +337,13 @@ class _StrengthTile extends StatelessWidget {
       onTap: onTap,
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: Icon(
-        selected ? Icons.check_circle : Icons.circle_outlined,
-        color: selected ? _SalawaatShellState.accent : _SalawaatShellState.muted,
-      ),
+      trailing: Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? _SalawaatShellState.accent : _SalawaatShellState.muted),
     );
   }
 }
 
-class _WhyPage extends StatelessWidget {
-  const _WhyPage();
+class _Why extends StatelessWidget {
+  const _Why();
 
   @override
   Widget build(BuildContext context) {
@@ -459,45 +353,10 @@ class _WhyPage extends StatelessWidget {
         Text('WHY', style: _Styles.eyebrow),
         Text('Increase it.', style: _Styles.title),
         SizedBox(height: 18),
-        Text(
-          'فَإِنْ زِدْتَ فَهُوَ خَيْرٌ لَكَ',
-          textDirection: TextDirection.rtl,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 28, color: _SalawaatShellState.accent),
-        ),
+        _Arabic('فَإِنْ زِدْتَ فَهُوَ خَيْرٌ لَكَ'),
         SizedBox(height: 18),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '“If you increase it, that is better for you.”',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 10),
-              _Pill('Jāmiʿ al-Tirmidhī 2457'),
-            ],
-          ),
-        ),
-        _Card(
-          child: Column(
-            children: [
-              Text(
-                'مَنْ صَلَّى عَلَيَّ وَاحِدَةً صَلَّى اللَّهُ عَلَيْهِ عَشْرًا',
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, height: 1.6, color: _SalawaatShellState.accent),
-              ),
-              SizedBox(height: 10),
-              Text(
-                '“Whoever sends ṣalāh upon me once, Allah sends ṣalāh upon him ten times.”',
-                style: TextStyle(height: 1.45),
-              ),
-              SizedBox(height: 10),
-              Align(alignment: Alignment.centerLeft, child: _Pill('Ṣaḥīḥ Muslim 408')),
-            ],
-          ),
-        ),
+        _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('“If you increase it, that is better for you.”', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)), SizedBox(height: 10), _Pill('Jāmiʿ al-Tirmidhī 2457')])),
+        _Card(child: Column(children: [_Arabic('مَنْ صَلَّى عَلَيَّ وَاحِدَةً صَلَّى اللَّهُ عَلَيْهِ عَشْرًا', size: 22), SizedBox(height: 10), Text('“Whoever sends ṣalāh upon me once, Allah sends ṣalāh upon him ten times.”', style: TextStyle(height: 1.45)), SizedBox(height: 10), Align(alignment: Alignment.centerLeft, child: _Pill('Ṣaḥīḥ Muslim 408'))])),
       ],
     );
   }
@@ -505,60 +364,46 @@ class _WhyPage extends StatelessWidget {
 
 class _Card extends StatelessWidget {
   const _Card({required this.child});
-
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
         color: _SalawaatShellState.panel,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF303637)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF303637))),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(padding: const EdgeInsets.all(16), child: child),
       ),
-      child: child,
     );
   }
 }
 
 class _Pill extends StatelessWidget {
   const _Pill(this.text);
-
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF252B2C),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: _SalawaatShellState.accent,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFF252B2C), borderRadius: BorderRadius.circular(999)),
+      child: Text(text, style: const TextStyle(color: _SalawaatShellState.accent, fontSize: 12, fontWeight: FontWeight.w700)),
     );
   }
 }
 
-class _Styles {
-  static const eyebrow = TextStyle(
-    color: Color(0xFFCDBF9E),
-    fontSize: 12,
-    fontWeight: FontWeight.w800,
-    letterSpacing: 1.2,
-  );
+class _Arabic extends StatelessWidget {
+  const _Arabic(this.text, {this.size = 26});
+  final String text;
+  final double size;
 
-  static const title = TextStyle(
-    fontSize: 34,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.7,
-  );
+  @override
+  Widget build(BuildContext context) => Text(text, textDirection: TextDirection.rtl, textAlign: TextAlign.center, style: TextStyle(fontSize: size, height: 1.7, color: _SalawaatShellState.accent));
+}
+
+class _Styles {
+  static const eyebrow = TextStyle(color: Color(0xFFCDBF9E), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2);
+  static const title = TextStyle(fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: -0.7);
 }
