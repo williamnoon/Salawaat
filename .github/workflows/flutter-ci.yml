@@ -15,6 +15,9 @@ permissions:
 jobs:
   test-and-build-web:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_AGENT_WEBHOOK_URL: ${{ secrets.PROJECT_AGENT_WEBHOOK_URL }}
+      PROJECT_AGENT_WEBHOOK_SECRET: ${{ secrets.PROJECT_AGENT_WEBHOOK_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,3 +50,7 @@ jobs:
           path: build/web
           if-no-files-found: error
           retention-days: 7
+
+      - name: Notify Power of successful staging build
+        if: github.event_name == 'push' && github.ref_name == 'staging' && env.PROJECT_AGENT_WEBHOOK_URL != '' && env.PROJECT_AGENT_WEBHOOK_SECRET != ''
+        run: bash scripts/notify_power.sh tests-passed "Salawaat staging CI passed and the web artifact is ready" fyi
