@@ -15,8 +15,20 @@ JSON
 
 signature=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$PROJECT_AGENT_WEBHOOK_SECRET" -hex | sed 's/^.* //')
 
-curl --fail-with-body --silent --show-error \
-  -X POST "$PROJECT_AGENT_WEBHOOK_URL" \
-  -H 'content-type: application/json' \
-  -H "x-project-agent-signature: sha256=${signature}" \
-  --data "$payload"
+curl_args=(
+  --fail-with-body
+  --silent
+  --show-error
+  -X POST "$PROJECT_AGENT_WEBHOOK_URL"
+  -H 'content-type: application/json'
+  -H "x-project-agent-signature: sha256=${signature}"
+)
+
+if [[ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]]; then
+  curl_args+=(
+    -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}"
+    -H 'x-vercel-set-bypass-cookie: true'
+  )
+fi
+
+curl "${curl_args[@]}" --data "$payload"
