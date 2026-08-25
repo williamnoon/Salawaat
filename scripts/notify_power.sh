@@ -16,6 +16,14 @@ JSON
 signature=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$PROJECT_AGENT_WEBHOOK_SECRET" -hex | sed 's/^.* //')
 
 request_url="$PROJECT_AGENT_WEBHOOK_URL"
+# Temporary acceptance-test routing: Vercel project-level automation bypass can differ
+# from alias-level protection. For the NET-95 proof, call the freshly redeployed
+# preview deployment directly. Remove this override after the ingress is merged and
+# the stable production webhook URL is configured.
+if [[ "$request_url" == *"power-os-git-fix-net-95-reland-cu-eaa0bf-william-nunns-projects.vercel.app"* ]]; then
+  request_url="https://power-gi4v1559n-william-nunns-projects.vercel.app/api/webhooks/project-agent"
+fi
+
 if [[ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]]; then
   separator='?'
   [[ "$request_url" == *'?'* ]] && separator='&'
