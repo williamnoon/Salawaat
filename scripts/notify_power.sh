@@ -19,6 +19,7 @@ curl_args=(
   --fail-with-body
   --silent
   --show-error
+  --location
   -X POST "$PROJECT_AGENT_WEBHOOK_URL"
   -H 'content-type: application/json'
   -H "x-project-agent-signature: sha256=${signature}"
@@ -31,4 +32,10 @@ if [[ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]]; then
   )
 fi
 
-curl "${curl_args[@]}" --data "$payload"
+response=$(curl "${curl_args[@]}" --data "$payload")
+printf '%s\n' "$response"
+
+if [[ "$response" != *'"ok":true'* ]]; then
+  echo "Power webhook did not confirm ok=true" >&2
+  exit 1
+fi
