@@ -1,0 +1,49 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create missing platform scaffolding
+        run: flutter create . --project-name salawaat --org org.abadaa --platforms=web,android,ios
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: salawaat-web-${{ github.sha }}
+          path: build/web
+          if-no-files-found: error
+          retention-days: 7
